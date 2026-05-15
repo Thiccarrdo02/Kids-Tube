@@ -207,12 +207,19 @@ private fun YouTubePlayer(
     // Locks down the IFrame player: no related videos at end, no annotations,
     // no "Watch on YouTube" link.
     // https://developers.google.com/youtube/player_parameters
+    //
+    // origin() is critical: YouTube's IFrame Player API silently refuses to
+    // play many videos (including most kid / music content) when the iframe
+    // URL doesn't include an origin parameter. The library's WebView base URL
+    // is https://www.youtube.com, so we match that here. Without it the player
+    // surfaces YouTube's own "Video unavailable - Error 152" UI.
     val opts = remember {
         IFramePlayerOptions.Builder()
             .controls(1)
             .rel(0)
             .ivLoadPolicy(3)
             .ccLoadPolicy(0)
+            .origin("https://www.youtube.com")
             .build()
     }
 
