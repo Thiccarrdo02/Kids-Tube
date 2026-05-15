@@ -109,10 +109,17 @@ export default function AddPage() {
             </div>
           )}
 
+          {cats.length === 0 && (
+            <div className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded p-2">
+              No categories found. Open the <a href="/dashboard/categories" className="underline">Categories</a> tab and add one, then come back.
+            </div>
+          )}
+
           <div className="flex items-center gap-2 pt-2 border-t">
             <label className="text-sm text-gray-600">Category</label>
             <select value={categoryId} onChange={e => setCategoryId(e.target.value)}
               className="border rounded-lg px-2 py-1 text-sm bg-white">
+              {cats.length === 0 && <option value="">(none available)</option>}
               {cats.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
             <button onClick={save} disabled={busy || !categoryId}
