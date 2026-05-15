@@ -1,0 +1,26 @@
+# Claude Code local settings
+.claude/
+
+# macOS / IDEs
+.DS_Store
+.idea/
+*.iml
+.vscode/
+
+# Node / Next.js (admin/)
+node_modules/
+.next/
+.vercel/
+*.log
+
+# Env files - never commit secrets
+.env
+.env.local
+.env.*.local
+
+# Android
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/captures/
