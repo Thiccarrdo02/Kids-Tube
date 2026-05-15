@@ -1,6 +1,5 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 type Category = { id: string; name: string };
 
@@ -10,7 +9,6 @@ type Preview =
   | { kind: 'channel'; channel: any; itemCount: number; thumbnailUrl: string };
 
 export default function AddPage() {
-  const router = useRouter();
   const [url, setUrl] = useState('');
   const [cats, setCats] = useState<Category[]>([]);
   const [categoryId, setCategoryId] = useState('');
@@ -19,12 +17,21 @@ export default function AddPage() {
   const [busy, setBusy] = useState(false);
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetch('/api/categories').then(r => r.json()).then(j => {
-      setCats(j.items ?? []);
-      if (j.items?.length && !categoryId) setCategoryId(j.items[0].id);
-    });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Inline "new category" UI state.
+  const [addingCat, setAddingCat] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
+
+  async function loadCats(autoSelectId?: string) {
+    const j = await fetch('/api/categories').then(r => r.json());
+    const list: Category[] = j.items ?? [];
+    setCats(list);
+    if (autoSelectId) {
+      setCategoryId(autoSelectId);
+    } else if (list.length && !categoryId) {
+      setCategoryId(list[0].id);
+    }
+  }
+  useEffect(() => { loadCats(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function doPreview() {
     setBusy(true); setErr(null); setPreview(null); setSavedMsg(null);
@@ -53,6 +60,23 @@ export default function AddPage() {
       if (!r.ok) { setErr(j.error ?? 'Save failed'); return; }
       setSavedMsg(`Saved ${j.saved} video${j.saved === 1 ? '' : 's'}.`);
       setPreview(null); setUrl('');
+    } finally { setBusy(false); }
+  }
+
+  async function createCategory() {
+    const name = newCatName.trim();
+    if (!name) return;
+    setBusy(true); setErr(null);
+    try {
+      const r = await fetch('/api/categories', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      const j = await r.json();
+      if (!r.ok) { setErr(j.error ?? 'Add failed'); return; }
+      setNewCatName(''); setAddingCat(false);
+      await loadCats(j.id);
     } finally { setBusy(false); }
   }
 
@@ -109,23 +133,40 @@ export default function AddPage() {
             </div>
           )}
 
-          {cats.length === 0 && (
-            <div className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded p-2">
-              No categories found. Open the <a href="/dashboard/categories" className="underline">Categories</a> tab and add one, then come back.
+          <div className="pt-2 border-t space-y-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <label className="text-sm text-gray-600">Category</label>
+              <select value={categoryId} onChange={e => setCategoryId(e.target.value)}
+                className="border rounded-lg px-2 py-1 text-sm bg-white">
+                {cats.length === 0 && <option value="">(none — add one)</option>}
+                {cats.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+              {!addingCat && (
+                <button onClick={() => setAddingCat(true)}
+                  className="text-sm text-gray-600 hover:text-gray-900 underline">
+                  + New
+                </button>
+              )}
+              <button onClick={save} disabled={busy || !categoryId}
+                className="ml-auto bg-brand text-white rounded-lg px-3 py-2 text-sm disabled:opacity-60">
+                {busy ? 'Saving...' : 'Confirm'}
+              </button>
             </div>
-          )}
-
-          <div className="flex items-center gap-2 pt-2 border-t">
-            <label className="text-sm text-gray-600">Category</label>
-            <select value={categoryId} onChange={e => setCategoryId(e.target.value)}
-              className="border rounded-lg px-2 py-1 text-sm bg-white">
-              {cats.length === 0 && <option value="">(none available)</option>}
-              {cats.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-            <button onClick={save} disabled={busy || !categoryId}
-              className="ml-auto bg-brand text-white rounded-lg px-3 py-2 text-sm disabled:opacity-60">
-              {busy ? 'Saving...' : 'Confirm'}
-            </button>
+            {addingCat && (
+              <div className="flex gap-2 items-center">
+                <input autoFocus value={newCatName}
+                  onChange={e => setNewCatName(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') createCategory(); }}
+                  placeholder="New category name (e.g. Nasheeds)"
+                  className="flex-1 border rounded-lg px-2 py-1 text-sm bg-white" />
+                <button onClick={createCategory} disabled={busy || !newCatName.trim()}
+                  className="text-sm bg-gray-900 text-white rounded-lg px-3 py-1 disabled:opacity-60">
+                  Add
+                </button>
+                <button onClick={() => { setAddingCat(false); setNewCatName(''); }}
+                  className="text-sm text-gray-600">Cancel</button>
+              </div>
+            )}
           </div>
         </div>
       )}

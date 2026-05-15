@@ -1,11 +1,24 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 import { getSession } from '@/lib/auth';
+import { db } from '@/lib/db';
 import LogoutButton from '@/components/LogoutButton';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
   if (!session.loggedIn) redirect('/login');
+
+  // If the database isn't initialized yet, force the user through /setup
+  // before anything else. The setup page itself is exempt to avoid loops.
+  const pathname = headers().get('x-pathname') ?? '';
+  if (!pathname.startsWith('/dashboard/setup')) {
+    const { error } = await db
+      .from('categories')
+      .select('id', { count: 'exact', head: true });
+    if (error) redirect('/dashboard/setup');
+  }
+
   return (
     <div className="min-h-screen">
       <header className="bg-white border-b">
