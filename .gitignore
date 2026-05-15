@@ -24,3 +24,6 @@ android/build/
 android/app/build/
 android/local.properties
 android/captures/
+
+# Locally built APK (CI produces the canonical one)
+kidstube-debug.apk

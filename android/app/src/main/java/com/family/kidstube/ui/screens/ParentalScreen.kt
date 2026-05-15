@@ -43,7 +43,7 @@ fun ParentalScreen(
                 title = { Text("Parental settings") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Outlined.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White),
@@ -126,7 +126,6 @@ private fun SettingsPanel(
     onForceRefresh: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    val ctx = LocalContext.current
     val backendFlow = prefs.backendUrl.collectAsState(initial = "")
     var url by remember(backendFlow.value) { mutableStateOf(backendFlow.value) }
     var saved by remember { mutableStateOf(false) }
