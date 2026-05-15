@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.family.kidstube.data.model.VideoDto
 import com.family.kidstube.ui.FeedViewModel
+import com.family.kidstube.ui.components.EmptyState
 import com.family.kidstube.ui.components.ThinDivider
 import com.family.kidstube.ui.components.VideoCard
 
@@ -30,9 +31,10 @@ fun LibraryScreen(
         Box(Modifier.fillMaxWidth().padding(16.dp)) { Text("Library") }
         ThinDivider()
         if (orderedHistory.isEmpty()) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Nothing watched yet")
-            }
+            EmptyState(
+                title = "Nothing watched yet",
+                body = "Videos you watch will show up here.",
+            )
         } else {
             LazyColumn(Modifier.fillMaxSize()) {
                 items(orderedHistory, key = { it.id }) { v ->

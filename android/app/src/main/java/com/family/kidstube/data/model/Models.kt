@@ -18,6 +18,21 @@ data class CategoryDto(
 )
 
 @JsonClass(generateAdapter = false)
+data class AddRequest(
+    val password: String,
+    val url: String,
+    val categoryId: String? = null,
+    val categoryName: String? = null,
+)
+
+@JsonClass(generateAdapter = false)
+data class AddResponse(
+    val ok: Boolean? = null,
+    val saved: Int? = null,
+    val error: String? = null,
+)
+
+@JsonClass(generateAdapter = false)
 data class VideoDto(
     val id: String,
     val title: String,

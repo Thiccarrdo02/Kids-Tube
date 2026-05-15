@@ -28,6 +28,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.family.kidstube.R
+import com.family.kidstube.ui.screens.AddVideoScreen
 import com.family.kidstube.ui.screens.HomeScreen
 import com.family.kidstube.ui.screens.LibraryScreen
 import com.family.kidstube.ui.screens.ParentalScreen
@@ -107,7 +108,14 @@ fun AppRoot() {
                         )
                     }
                     composable("parental") {
-                        ParentalScreen(vm = feedVm, onBack = { nav.popBackStack() })
+                        ParentalScreen(
+                            vm = feedVm,
+                            onBack = { nav.popBackStack() },
+                            onOpenAddVideo = { nav.navigate("addvideo") },
+                        )
+                    }
+                    composable("addvideo") {
+                        AddVideoScreen(vm = feedVm, onBack = { nav.popBackStack() })
                     }
                 }
             }

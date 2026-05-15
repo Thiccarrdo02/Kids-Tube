@@ -39,11 +39,13 @@ class FeedRepository(private val ctx: Context, private val prefs: AppPrefs) {
             prefs.saveFeedCache(adapter.toJson(resp))
             Feed(sortCats(resp.categories), resp.videos, fromCache = false)
         } catch (t: Throwable) {
-            // Network failed -- fall back to whatever's cached, even if stale.
+            // Network or parse failed. If we have any cached payload (even
+            // stale), surface it -- better than an angry error screen for
+            // a kid. Otherwise rethrow with a friendly message.
             cached?.let { adapter.fromJson(it.first) }?.let {
                 return Feed(sortCats(it.categories), it.videos, fromCache = true)
             }
-            throw t
+            throw RuntimeException(friendlyMessage(t), t)
         }
     }
 
@@ -51,5 +53,27 @@ class FeedRepository(private val ctx: Context, private val prefs: AppPrefs) {
 
     companion object {
         private const val TTL_MS = 60L * 60 * 1000 // 1 hour
+
+        // Maps low-level network/parse errors to a single short sentence
+        // the parent can act on. Anything unrecognized falls through to
+        // the original message so we don't hide useful info.
+        fun friendlyMessage(t: Throwable): String {
+            val msg = t.message.orEmpty()
+            return when {
+                msg.contains("malformed JSON", ignoreCase = true) ||
+                    msg.contains("Expected BEGIN_OBJECT", ignoreCase = true) ||
+                    msg.contains("setLenient", ignoreCase = true) ->
+                    "Backend URL isn't returning a KidsTube feed. Open parental settings and check the URL."
+                msg.contains("Unable to resolve host", ignoreCase = true) ||
+                    msg.contains("UnknownHost", ignoreCase = true) ->
+                    "Can't reach the backend. Check the URL and your internet."
+                msg.contains("timeout", ignoreCase = true) ->
+                    "Backend timed out. Try Force refresh."
+                msg.contains("HTTP 401") -> "Wrong admin password."
+                msg.contains("HTTP 4") || msg.contains("HTTP 5") ->
+                    "Backend error: $msg"
+                else -> if (msg.isBlank()) "Network error" else msg
+            }
+        }
     }
 }

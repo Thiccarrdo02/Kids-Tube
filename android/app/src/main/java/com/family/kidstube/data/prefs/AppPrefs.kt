@@ -16,6 +16,7 @@ class AppPrefs(private val ctx: Context) {
 
     private val KEY_BACKEND = stringPreferencesKey("backend_url")
     private val KEY_PIN_HASH = stringPreferencesKey("pin_hash")
+    private val KEY_ADMIN_PW = stringPreferencesKey("admin_password")
     private val KEY_HISTORY = stringPreferencesKey("watch_history")
     private val KEY_CACHED_FEED = stringPreferencesKey("cached_feed_json")
     private val KEY_CACHED_AT = stringPreferencesKey("cached_feed_at")
@@ -40,6 +41,17 @@ class AppPrefs(private val ctx: Context) {
     suspend fun verifyPin(pin: String): Boolean {
         val stored = ctx.dataStore.data.first()[KEY_PIN_HASH] ?: return false
         return stored == sha256(pin)
+    }
+
+    // Admin password (used to call the backend's /api/app/add endpoint).
+    // Stored as plaintext in the app's private DataStore -- the parental
+    // PIN gates access to this whole settings area. Not a server secret;
+    // never leaves the device except over HTTPS to the user's own backend.
+    suspend fun getAdminPassword(): String? =
+        ctx.dataStore.data.first()[KEY_ADMIN_PW]
+
+    suspend fun setAdminPassword(pw: String) {
+        ctx.dataStore.edit { it[KEY_ADMIN_PW] = pw }
     }
 
     suspend fun cachedFeed(): Pair<String, Long>? {

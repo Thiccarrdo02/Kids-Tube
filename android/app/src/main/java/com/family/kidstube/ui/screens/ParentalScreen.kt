@@ -23,6 +23,7 @@ import kotlinx.coroutines.launch
 fun ParentalScreen(
     vm: FeedViewModel,
     onBack: () -> Unit,
+    onOpenAddVideo: () -> Unit = {},
 ) {
     val ctx = LocalContext.current
     val prefs = remember { AppPrefs(ctx) }
@@ -111,6 +112,7 @@ fun ParentalScreen(
                         }
                     },
                     onForceRefresh = { vm.refresh() },
+                    onOpenAddVideo = onOpenAddVideo,
                 )
             }
         }
@@ -124,11 +126,18 @@ private fun SettingsPanel(
     prefs: AppPrefs,
     onClearCache: () -> Unit,
     onForceRefresh: () -> Unit,
+    onOpenAddVideo: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val backendFlow = prefs.backendUrl.collectAsState(initial = "")
     var url by remember(backendFlow.value) { mutableStateOf(backendFlow.value) }
     var saved by remember { mutableStateOf(false) }
+
+    Button(
+        onClick = onOpenAddVideo,
+        modifier = Modifier.fillMaxWidth(),
+    ) { Text("Add a video") }
+    Spacer(Modifier.height(4.dp))
 
     OutlinedTextField(
         value = url, onValueChange = { url = it },

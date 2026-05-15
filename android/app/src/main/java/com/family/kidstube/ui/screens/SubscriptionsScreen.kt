@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.family.kidstube.data.model.VideoDto
 import com.family.kidstube.ui.FeedViewModel
+import com.family.kidstube.ui.components.EmptyState
 import com.family.kidstube.ui.components.ThinDivider
 import com.family.kidstube.ui.components.VideoCard
 import com.family.kidstube.ui.theme.BrandRed
@@ -38,9 +39,10 @@ fun SubscriptionsScreen(
         Box(Modifier.fillMaxWidth().padding(16.dp)) { Text("Subscriptions") }
         ThinDivider()
         if (grouped.isEmpty()) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("No channels yet")
-            }
+            EmptyState(
+                title = "No channels yet",
+                body = "Channels you've added videos from will be grouped here.",
+            )
         } else {
             LazyColumn(Modifier.fillMaxSize()) {
                 grouped.forEach { (channel, vids) ->

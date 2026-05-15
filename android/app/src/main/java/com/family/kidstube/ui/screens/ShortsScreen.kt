@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.family.kidstube.ui.FeedViewModel
+import com.family.kidstube.ui.components.EmptyState
 import com.family.kidstube.ui.components.SkeletonCard
 import com.family.kidstube.ui.components.ThinDivider
 import com.family.kidstube.ui.components.VideoCard
@@ -30,9 +31,10 @@ fun ShortsScreen(
         ThinDivider()
         when {
             state.loading -> LazyColumn(Modifier.fillMaxSize()) { items(6) { SkeletonCard() } }
-            shorts.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("No Shorts under 60s yet")
-            }
+            shorts.isEmpty() -> EmptyState(
+                title = "No Shorts yet",
+                body = "Shorts will appear here when you add videos that are under 60 seconds.",
+            )
             else -> LazyColumn(Modifier.fillMaxSize()) {
                 items(shorts, key = { it.id }) { v ->
                     VideoCard(v, v.channelTitle) { onOpenVideo(v.id) }

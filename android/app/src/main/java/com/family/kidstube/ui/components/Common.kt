@@ -66,7 +66,14 @@ fun BrandWordmark(onLongPress5: () -> Unit) {
             }
         }
         Spacer(Modifier.width(6.dp))
-        Text("KidsTube", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+        Text("YouTube", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+        Spacer(Modifier.width(4.dp))
+        Text(
+            "kids by Zawish",
+            fontWeight = FontWeight.Normal,
+            fontSize = 14.sp,
+            color = SubtleGray,
+        )
     }
 }
 
@@ -176,6 +183,63 @@ fun SkeletonCard() {
 @Composable
 fun ThinDivider() {
     Box(Modifier.fillMaxWidth().height(1.dp).background(Divider))
+}
+
+// Generic full-screen empty / error state with a big red play badge and
+// a couple lines of text. Used by Home, Library, Shorts, Subs.
+@Composable
+fun EmptyState(
+    title: String,
+    body: String? = null,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(
+            Modifier
+                .size(width = 84.dp, height = 60.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(BrandRed),
+            contentAlignment = Alignment.Center,
+        ) {
+            Box(Modifier.size(22.dp)) {
+                androidx.compose.foundation.Canvas(Modifier.fillMaxSize()) {
+                    val w = size.width; val h = size.height
+                    val p = androidx.compose.ui.graphics.Path().apply {
+                        moveTo(0f, 0f); lineTo(w, h / 2f); lineTo(0f, h); close()
+                    }
+                    drawPath(p, Color.White)
+                }
+            }
+        }
+        Spacer(Modifier.height(16.dp))
+        Text(title, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+        if (!body.isNullOrBlank()) {
+            Spacer(Modifier.height(6.dp))
+            Text(
+                body,
+                color = SubtleGray,
+                fontSize = 13.sp,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            )
+        }
+        if (actionLabel != null && onAction != null) {
+            Spacer(Modifier.height(14.dp))
+            Box(
+                Modifier
+                    .clip(RoundedCornerShape(50))
+                    .background(Color(0xFF0F0F0F))
+                    .clickable(onClick = onAction)
+                    .padding(horizontal = 18.dp, vertical = 8.dp),
+            ) { Text(actionLabel, color = Color.White, fontSize = 13.sp) }
+        }
+    }
 }
 
 private fun formatDuration(s: Int): String {

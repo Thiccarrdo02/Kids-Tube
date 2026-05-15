@@ -4,16 +4,27 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Cast
+import androidx.compose.material.icons.outlined.NotificationsNone
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.family.kidstube.ui.FeedViewModel
 import com.family.kidstube.ui.components.*
+import com.family.kidstube.ui.theme.BrandRed
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,7 +48,32 @@ fun HomeScreen(
     }
 
     Column(Modifier.fillMaxSize().background(Color.White)) {
-        BrandWordmark(onLongPress5 = onLogoLongPress5)
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            BrandWordmark(onLongPress5 = onLogoLongPress5)
+            Spacer(Modifier.weight(1f))
+            // Decorative-only: a YouTube-mobile feel without functioning escape
+            // hatches (the icons don't navigate anywhere a kid could misuse).
+            IconButton(onClick = {}) {
+                Icon(Icons.Outlined.Cast, contentDescription = null, tint = Color(0xFF0F0F0F))
+            }
+            IconButton(onClick = {}) {
+                Icon(Icons.Outlined.NotificationsNone, contentDescription = null, tint = Color(0xFF0F0F0F))
+            }
+            IconButton(onClick = {}) {
+                Icon(Icons.Outlined.Search, contentDescription = null, tint = Color(0xFF0F0F0F))
+            }
+            Box(
+                Modifier
+                    .padding(end = 12.dp)
+                    .size(28.dp)
+                    .clip(CircleShape)
+                    .background(BrandRed),
+                contentAlignment = Alignment.Center,
+            ) { Text("Z", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp) }
+        }
         ThinDivider()
         if (chipLabels.size > 1) {
             CategoryChips(
@@ -60,14 +96,18 @@ fun HomeScreen(
                     }
                 }
                 state.error != null && visibleVideos.isEmpty() -> {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(state.error ?: "")
-                    }
+                    EmptyState(
+                        title = "Can't load videos",
+                        body = state.error,
+                        actionLabel = "Try again",
+                        onAction = { vm.refresh() },
+                    )
                 }
                 visibleVideos.isEmpty() -> {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("No videos yet")
-                    }
+                    EmptyState(
+                        title = "No videos yet",
+                        body = "Tap the YouTube logo 5 times to open parental settings and add a video.",
+                    )
                 }
                 else -> {
                     LazyColumn(Modifier.fillMaxSize()) {
