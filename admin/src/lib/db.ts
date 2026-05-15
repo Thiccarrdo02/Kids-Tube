@@ -29,6 +29,7 @@ export type Video = {
   category_id: string | null;
   source_id: string | null;
   added_at: string;
+  is_embeddable: boolean;
 };
 
 export type Source = {

@@ -28,6 +28,8 @@ export type VideoMeta = {
   thumbnailUrl: string;
   durationSeconds: number;
   publishedAt: string;
+  embeddable: boolean;
+  privacyStatus: string;        // 'public' | 'unlisted' | 'private'
 };
 
 // ISO 8601 duration -> seconds (e.g. PT1H2M3S, PT45S)
@@ -53,8 +55,10 @@ export async function fetchVideos(ids: string[]): Promise<VideoMeta[]> {
   const out: VideoMeta[] = [];
   for (let i = 0; i < ids.length; i += 50) {
     const chunk = ids.slice(i, i + 50);
+    // Adding 'status' costs 0 extra quota beyond the 1 unit per request --
+    // we just get more fields back.
     const data = await yt<any>('videos', {
-      part: 'snippet,contentDetails',
+      part: 'snippet,contentDetails,status',
       id: chunk.join(','),
       maxResults: '50',
     });
@@ -67,6 +71,8 @@ export async function fetchVideos(ids: string[]): Promise<VideoMeta[]> {
         thumbnailUrl: pickThumb(item.snippet.thumbnails),
         durationSeconds: parseDuration(item.contentDetails.duration),
         publishedAt: item.snippet.publishedAt,
+        embeddable: item.status?.embeddable !== false,
+        privacyStatus: item.status?.privacyStatus ?? 'public',
       });
     }
   }

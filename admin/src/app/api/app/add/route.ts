@@ -72,18 +72,25 @@ export async function POST(req: Request) {
     if (parsed.kind === 'video') {
       const [v] = await fetchVideos([parsed.id]);
       if (!v) return jsonCors({ error: 'video not found' }, 404);
+      if (!v.embeddable) {
+        return jsonCors(
+          { error: 'This video has embedding disabled by the channel owner. Try a different one.' },
+          400,
+        );
+      }
       await upsertVideos([v], catId, null);
-      return jsonCors({ ok: true, saved: 1 });
+      return jsonCors({ ok: true, saved: 1, skipped: 0 });
     }
     if (parsed.kind === 'playlist') {
       const meta = await fetchPlaylistMeta(parsed.id);
       if (!meta) return jsonCors({ error: 'playlist not found' }, 404);
       const src = await upsertSource('playlist', parsed.id, meta.title, catId);
       const ids = await fetchPlaylistVideoIds(parsed.id);
-      const vids = await fetchVideos(ids);
-      await upsertVideos(vids, catId, src.id);
+      const all = await fetchVideos(ids);
+      const playable = all.filter(v => v.embeddable);
+      await upsertVideos(playable, catId, src.id);
       await db.from('sources').update({ last_synced_at: new Date().toISOString() }).eq('id', src.id);
-      return jsonCors({ ok: true, saved: vids.length });
+      return jsonCors({ ok: true, saved: playable.length, skipped: all.length - playable.length });
     }
     const ch = await fetchChannelMeta(
       parsed.kind === 'channelHandle' ? { handle: parsed.handle } : { channelId: parsed.id }
@@ -91,10 +98,11 @@ export async function POST(req: Request) {
     if (!ch) return jsonCors({ error: 'channel not found' }, 404);
     const src = await upsertSource('channel', ch.uploadsPlaylistId, ch.title, catId);
     const ids = await fetchPlaylistVideoIds(ch.uploadsPlaylistId, 50);
-    const vids = await fetchVideos(ids);
-    await upsertVideos(vids, catId, src.id);
+    const all = await fetchVideos(ids);
+    const playable = all.filter(v => v.embeddable);
+    await upsertVideos(playable, catId, src.id);
     await db.from('sources').update({ last_synced_at: new Date().toISOString() }).eq('id', src.id);
-    return jsonCors({ ok: true, saved: vids.length });
+    return jsonCors({ ok: true, saved: playable.length, skipped: all.length - playable.length });
   } catch (e: any) {
     return jsonCors({ error: e.message ?? 'add failed' }, 500);
   }
@@ -111,7 +119,7 @@ async function upsertSource(kind: 'playlist' | 'channel', sourceId: string, titl
 }
 
 async function upsertVideos(
-  vids: { videoId: string; title: string; channelTitle: string; channelId: string; thumbnailUrl: string; durationSeconds: number; publishedAt: string }[],
+  vids: { videoId: string; title: string; channelTitle: string; channelId: string; thumbnailUrl: string; durationSeconds: number; publishedAt: string; embeddable: boolean }[],
   categoryId: string,
   sourceId: string | null,
 ) {
@@ -126,6 +134,7 @@ async function upsertVideos(
     published_at: v.publishedAt,
     category_id: categoryId,
     source_id: sourceId,
+    is_embeddable: v.embeddable,
   }));
   const { error } = await db.from('videos').upsert(rows, { onConflict: 'video_id' });
   if (error) throw new Error(error.message);

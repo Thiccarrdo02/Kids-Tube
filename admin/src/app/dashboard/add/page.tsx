@@ -58,7 +58,12 @@ export default function AddPage() {
       });
       const j = await r.json();
       if (!r.ok) { setErr(j.error ?? 'Save failed'); return; }
-      setSavedMsg(`Saved ${j.saved} video${j.saved === 1 ? '' : 's'}.`);
+      const saved = j.saved ?? 0;
+      const skipped = j.skipped ?? 0;
+      const skipNote = skipped > 0
+        ? ` (${skipped} skipped — channel disabled embedding)`
+        : '';
+      setSavedMsg(`Saved ${saved} video${saved === 1 ? '' : 's'}.${skipNote}`);
       setPreview(null); setUrl('');
     } finally { setBusy(false); }
   }

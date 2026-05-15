@@ -29,8 +29,12 @@ create table if not exists videos (
   published_at timestamptz,
   category_id uuid references categories(id) on delete set null,
   source_id uuid references sources(id) on delete set null,
-  added_at timestamptz not null default now()
+  added_at timestamptz not null default now(),
+  is_embeddable boolean not null default true
 );
+
+-- For DBs created before is_embeddable existed.
+alter table videos add column if not exists is_embeddable boolean not null default true;
 
 create index if not exists videos_added_at_idx on videos (added_at desc);
 create index if not exists videos_category_idx on videos (category_id);

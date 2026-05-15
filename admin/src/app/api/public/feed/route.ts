@@ -8,7 +8,9 @@ export const dynamic = 'force-dynamic';
 // Shape is stable -- the Android client deserializes this directly.
 export async function GET() {
   const [{ data: videos, error: ve }, { data: cats, error: ce }] = await Promise.all([
-    db.from('videos').select('*').order('added_at', { ascending: false }),
+    // Only serve videos that YouTube allows us to embed. Refresh sources
+    // updates this flag periodically.
+    db.from('videos').select('*').eq('is_embeddable', true).order('added_at', { ascending: false }),
     db.from('categories').select('*').order('sort_order'),
   ]);
   if (ve) return jsonCors({ error: ve.message }, 500);
