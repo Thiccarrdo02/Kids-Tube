@@ -3,6 +3,7 @@ import java.util.Properties
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 // Load BACKEND_URL from ../config.properties so the parent can edit one file
@@ -18,7 +19,7 @@ val backendUrl: String = run {
 
 android {
     namespace = "com.family.kidstube"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.family.kidstube"
@@ -47,7 +48,8 @@ android {
         compose = true
         buildConfig = true
     }
-    composeOptions { kotlinCompilerExtensionVersion = "1.5.14" }
+    // Compose compiler now provided by the org.jetbrains.kotlin.plugin.compose
+    // plugin (Kotlin 2.0+ requirement); composeOptions no longer needed.
     packaging { resources.excludes += setOf("META-INF/AL2.0", "META-INF/LGPL2.1") }
 }
 
@@ -84,7 +86,10 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
     // YouTube IFrame Player wrapper (most maintained)
-    implementation("com.pierfrancescosoffritti.androidyoutubeplayer:core:12.1.0")
+    // v13.0.0+ is required: YouTube tightened embedding requirements in
+    // Aug 2025 and the older versions silently fail with "Video unavailable"
+    // / error 152. v13.0.0 fixes via PR #1252 (#1238 / #1235).
+    implementation("com.pierfrancescosoffritti.androidyoutubeplayer:core:13.0.0")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
 }

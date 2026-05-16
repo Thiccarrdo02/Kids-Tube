@@ -152,6 +152,8 @@ private fun PlayerErrorOverlay(
             "Couldn't load video" to "Try a different video."
         PlayerConstants.PlayerError.HTML_5_PLAYER ->
             "Player error" to "Restart the app or try a different video."
+        PlayerConstants.PlayerError.REQUEST_MISSING_HTTP_REFERER ->
+            "Network blocked" to "The device's browser couldn't send the right headers to YouTube. Restart the app."
         PlayerConstants.PlayerError.UNKNOWN ->
             "Something went wrong" to "Try a different video."
     }
@@ -203,23 +205,21 @@ private fun YouTubePlayer(
     onError: (PlayerConstants.PlayerError) -> Unit,
 ) {
     val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val context = LocalContext.current
 
     // Locks down the IFrame player: no related videos at end, no annotations,
     // no "Watch on YouTube" link.
     // https://developers.google.com/youtube/player_parameters
     //
-    // origin() is critical: YouTube's IFrame Player API silently refuses to
-    // play many videos (including most kid / music content) when the iframe
-    // URL doesn't include an origin parameter. The library's WebView base URL
-    // is https://www.youtube.com, so we match that here. Without it the player
-    // surfaces YouTube's own "Video unavailable - Error 152" UI.
+    // v13.0.0 default origin = app package id (e.g. com.family.kidstube),
+    // which is what YouTube's IFrame Player now requires for embedded
+    // playback. The Builder(context) signature is also new in v13.
     val opts = remember {
-        IFramePlayerOptions.Builder()
+        IFramePlayerOptions.Builder(context)
             .controls(1)
             .rel(0)
             .ivLoadPolicy(3)
             .ccLoadPolicy(0)
-            .origin("https://www.youtube.com")
             .build()
     }
 
