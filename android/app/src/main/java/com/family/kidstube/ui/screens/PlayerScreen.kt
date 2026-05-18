@@ -19,6 +19,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Favorite
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Fullscreen
 import androidx.compose.material.icons.outlined.FullscreenExit
 import androidx.compose.material.icons.outlined.PlayArrow
@@ -34,7 +36,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -44,6 +45,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import coil.compose.AsyncImage
 import com.family.kidstube.data.model.VideoDto
 import com.family.kidstube.ui.FeedViewModel
@@ -63,7 +65,9 @@ fun PlayerScreen(
     onOpenVideo: (String) -> Unit,
 ) {
     val state by vm.state.collectAsState()
+    val favorites by vm.favorites.collectAsState()
     val current = state.videos.firstOrNull { it.id == videoId }
+    val isFavorite = videoId in favorites
 
     // Smarter Up next: same channel first, then same category, then everything
     // else shuffled. Keeps a YouTube-like feel without ever recommending
@@ -291,10 +295,22 @@ fun PlayerScreen(
 
         if (!isLandscape) {
             current?.let {
-                Column(Modifier.padding(horizontal = 12.dp, vertical = 12.dp)) {
-                    Text(it.title, style = MaterialTheme.typography.titleMedium, maxLines = 3)
-                    Spacer(Modifier.height(6.dp))
-                    Text(it.channelTitle.orEmpty(), color = Color(0xFF606060))
+                Row(
+                    Modifier.padding(start = 12.dp, top = 12.dp, end = 8.dp, bottom = 8.dp),
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(it.title, style = MaterialTheme.typography.titleMedium, maxLines = 3)
+                        Spacer(Modifier.height(6.dp))
+                        Text(it.channelTitle.orEmpty(), color = Color(0xFF606060))
+                    }
+                    IconButton(onClick = { vm.toggleFavorite(videoId) }) {
+                        Icon(
+                            if (isFavorite) Icons.Outlined.Favorite else Icons.Outlined.FavoriteBorder,
+                            contentDescription = if (isFavorite) "Remove favorite" else "Add favorite",
+                            tint = if (isFavorite) Color(0xFFFF0000) else Color(0xFF0F0F0F),
+                        )
+                    }
                 }
                 ThinDivider()
                 Text("Up next", modifier = Modifier.padding(12.dp))
@@ -460,7 +476,7 @@ private fun PlayerErrorOverlay(
 }
 
 @Composable
-private fun YouTubePlayer(
+fun YouTubePlayer(
     videoId: String,
     onPlayerReady: (YouTubePlayer) -> Unit,
     onError: (PlayerConstants.PlayerError) -> Unit,
@@ -479,7 +495,6 @@ private fun YouTubePlayer(
             .rel(0)
             .ivLoadPolicy(3)
             .ccLoadPolicy(0)
-            .modestBranding(1)
             .fullscreen(0)
             .build()
     }

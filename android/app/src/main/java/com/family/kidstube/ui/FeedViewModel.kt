@@ -32,9 +32,15 @@ class FeedViewModel(app: Application) : AndroidViewModel(app) {
     private val _history = MutableStateFlow<List<String>>(emptyList())
     val history: StateFlow<List<String>> = _history.asStateFlow()
 
+    private val _favorites = MutableStateFlow<List<String>>(emptyList())
+    val favorites: StateFlow<List<String>> = _favorites.asStateFlow()
+
     init {
         load(forceRefresh = false)
-        viewModelScope.launch { _history.value = prefs.watchHistory() }
+        viewModelScope.launch {
+            _history.value = prefs.watchHistory()
+            _favorites.value = prefs.favorites()
+        }
     }
 
     fun refresh() = load(forceRefresh = true)
@@ -64,6 +70,12 @@ class FeedViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             prefs.pushHistory(videoId)
             _history.value = prefs.watchHistory()
+        }
+    }
+
+    fun toggleFavorite(videoId: String) {
+        viewModelScope.launch {
+            _favorites.value = prefs.toggleFavorite(videoId)
         }
     }
 }

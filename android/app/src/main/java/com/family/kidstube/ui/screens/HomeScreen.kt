@@ -8,7 +8,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Cast
 import androidx.compose.material.icons.outlined.NotificationsNone
+import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Shuffle
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -25,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import com.family.kidstube.ui.FeedViewModel
 import com.family.kidstube.ui.components.*
 import com.family.kidstube.ui.theme.BrandRed
+import kotlin.random.Random
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,15 +39,20 @@ fun HomeScreen(
     val state by vm.state.collectAsState()
 
     var selectedCategoryIdx by remember { mutableIntStateOf(0) }
+    var shuffleEnabled by remember { mutableStateOf(false) }
+    var shuffleSeed by remember { mutableIntStateOf(Random.nextInt()) }
     val chipLabels = remember(state.categories) {
         listOf("All") + state.categories.map { it.name }
     }
     val selectedCategoryId: String? = remember(selectedCategoryIdx, state.categories) {
-        if (selectedCategoryIdx == 0) null else state.categories[selectedCategoryIdx - 1].id
+        if (selectedCategoryIdx == 0) null else state.categories.getOrNull(selectedCategoryIdx - 1)?.id
     }
     val visibleVideos = remember(state.videos, selectedCategoryId) {
         if (selectedCategoryId == null) state.videos
         else state.videos.filter { it.categoryId == selectedCategoryId }
+    }
+    val displayVideos = remember(visibleVideos, shuffleEnabled, shuffleSeed) {
+        if (shuffleEnabled) visibleVideos.shuffled(Random(shuffleSeed)) else visibleVideos
     }
 
     Column(Modifier.fillMaxSize().background(Color.White)) {
@@ -83,6 +91,39 @@ fun HomeScreen(
             )
             ThinDivider()
         }
+        if (visibleVideos.isNotEmpty()) {
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                IconButton(
+                    onClick = {
+                        shuffleEnabled = !shuffleEnabled
+                        if (shuffleEnabled) shuffleSeed = Random.nextInt()
+                    },
+                ) {
+                    Icon(
+                        Icons.Outlined.Shuffle,
+                        contentDescription = "Shuffle feed",
+                        tint = if (shuffleEnabled) BrandRed else Color(0xFF0F0F0F),
+                    )
+                }
+                Text(
+                    if (shuffleEnabled) "Shuffle on" else "Newest first",
+                    color = Color(0xFF606060),
+                    fontSize = 13.sp,
+                )
+                Spacer(Modifier.weight(1f))
+                IconButton(
+                    onClick = {
+                        visibleVideos.randomOrNull()?.let { onOpenVideo(it.id) }
+                    },
+                ) {
+                    Icon(Icons.Outlined.PlayArrow, contentDescription = "Play random video")
+                }
+            }
+            ThinDivider()
+        }
 
         PullToRefreshBox(
             isRefreshing = state.refreshing,
@@ -111,7 +152,7 @@ fun HomeScreen(
                 }
                 else -> {
                     LazyColumn(Modifier.fillMaxSize()) {
-                        items(visibleVideos, key = { it.id }) { v ->
+                        items(displayVideos, key = { it.id }) { v ->
                             VideoCard(v, v.channelTitle) { onOpenVideo(v.id) }
                         }
                         item { Spacer(Modifier.height(8.dp)) }

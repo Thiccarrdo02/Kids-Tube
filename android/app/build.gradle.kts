@@ -42,12 +42,24 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
     kotlinOptions { jvmTarget = "17" }
     buildFeatures {
         compose = true
         buildConfig = true
     }
+
+    lint {
+        // Work around an AGP/Kotlin UAST crash in Compose's detector.
+        disable += setOf(
+            "RememberInComposition",
+            "FrequentlyChangingValue",
+            "NullSafeMutableLiveData",
+            "AutoboxingStateCreation",
+        )
+    }
+
     // Compose compiler now provided by the org.jetbrains.kotlin.plugin.compose
     // plugin (Kotlin 2.0+ requirement); composeOptions no longer needed.
     packaging { resources.excludes += setOf("META-INF/AL2.0", "META-INF/LGPL2.1") }
@@ -58,15 +70,19 @@ dependencies {
     implementation(composeBom)
     androidTestImplementation(composeBom)
 
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
+
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.activity:activity-compose:1.9.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.3")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.3")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.3")
     implementation("androidx.navigation:navigation-compose:2.7.7")
 
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
 

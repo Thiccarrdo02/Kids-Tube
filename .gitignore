@@ -12,6 +12,10 @@ node_modules/
 .next/
 .vercel/
 *.log
+*.tsbuildinfo
+
+# Local tooling downloaded by Codex
+.tools/
 
 # Env files - never commit secrets
 .env

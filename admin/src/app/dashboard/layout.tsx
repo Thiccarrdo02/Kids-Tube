@@ -33,6 +33,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <Link href="/dashboard" className="hover:text-gray-900">Videos</Link>
             <Link href="/dashboard/add" className="hover:text-gray-900">Add</Link>
             <Link href="/dashboard/categories" className="hover:text-gray-900">Categories</Link>
+            <Link href="/dashboard/sources" className="hover:text-gray-900">Sources</Link>
           </nav>
           <div className="ml-auto"><LogoutButton /></div>
         </div>

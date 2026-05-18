@@ -22,10 +22,15 @@ export async function GET(req: Request) {
   const pageSize = Math.min(100, parseInt(searchParams.get('pageSize') ?? '25', 10));
   const category = searchParams.get('category');
   const search = searchParams.get('q')?.trim();
+  const sort = searchParams.get('sort') ?? 'newest';
 
-  let q = db.from('videos').select('*', { count: 'exact' }).order('added_at', { ascending: false });
+  let q = db.from('videos').select('*', { count: 'exact' });
   if (category && category !== 'all') q = q.eq('category_id', category);
   if (search) q = q.ilike('title', `%${search}%`);
+  if (sort === 'oldest') q = q.order('added_at', { ascending: true });
+  else if (sort === 'title') q = q.order('title', { ascending: true });
+  else if (sort === 'category') q = q.order('category_id', { ascending: true }).order('added_at', { ascending: false });
+  else q = q.order('added_at', { ascending: false });
 
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;

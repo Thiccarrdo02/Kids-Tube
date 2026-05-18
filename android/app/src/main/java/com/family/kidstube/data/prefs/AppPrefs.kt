@@ -18,6 +18,7 @@ class AppPrefs(private val ctx: Context) {
     private val KEY_PIN_HASH = stringPreferencesKey("pin_hash")
     private val KEY_ADMIN_PW = stringPreferencesKey("admin_password")
     private val KEY_HISTORY = stringPreferencesKey("watch_history")
+    private val KEY_FAVORITES = stringPreferencesKey("favorite_videos")
     private val KEY_CACHED_FEED = stringPreferencesKey("cached_feed_json")
     private val KEY_CACHED_AT = stringPreferencesKey("cached_feed_at")
 
@@ -83,6 +84,21 @@ class AppPrefs(private val ctx: Context) {
             val next = (listOf(videoId) + current).take(50)
             p[KEY_HISTORY] = next.joinToString(",")
         }
+    }
+
+    suspend fun favorites(): List<String> {
+        val raw = ctx.dataStore.data.first()[KEY_FAVORITES] ?: return emptyList()
+        return raw.split(",").filter { it.isNotBlank() }
+    }
+
+    suspend fun toggleFavorite(videoId: String): List<String> {
+        var next: List<String> = emptyList()
+        ctx.dataStore.edit { p ->
+            val current = (p[KEY_FAVORITES] ?: "").split(",").filter { it.isNotBlank() }
+            next = if (videoId in current) current.filter { it != videoId } else listOf(videoId) + current
+            p[KEY_FAVORITES] = next.joinToString(",")
+        }
+        return next
     }
 
     private fun sha256(s: String): String {
