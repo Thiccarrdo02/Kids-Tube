@@ -32,3 +32,4 @@ android/captures/
 # Locally built APK (CI produces the canonical one)
 kidstube-debug.apk
 kidstube-updated-tv-debug.apk
+kidstube-v1.1-debug.apk
