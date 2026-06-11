@@ -1,5 +1,6 @@
 package com.family.kidstube.ui
 
+import android.content.res.Configuration
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -35,6 +37,7 @@ import com.family.kidstube.ui.screens.ParentalScreen
 import com.family.kidstube.ui.screens.PlayerScreen
 import com.family.kidstube.ui.screens.ShortsScreen
 import com.family.kidstube.ui.screens.SubscriptionsScreen
+import com.family.kidstube.ui.screens.TvHomeScreen
 import com.family.kidstube.ui.theme.KidsTubeTheme
 
 private sealed class Tab(val route: String, val labelRes: Int, val icon: ImageVector) {
@@ -52,11 +55,34 @@ fun AppRoot() {
         // fetch + one cache + one history snapshot.
         val activity = LocalContext.current as ComponentActivity
         val feedVm: FeedViewModel = viewModel(viewModelStoreOwner = activity)
+        val isTv = LocalConfiguration.current.uiMode and Configuration.UI_MODE_TYPE_MASK ==
+            Configuration.UI_MODE_TYPE_TELEVISION
 
         val nav = rememberNavController()
         val backStack by nav.currentBackStackEntryAsState()
         val currentRoute = backStack?.destination?.route
         val showBar = currentRoute in tabs.map { it.route }
+
+        if (isTv) {
+            NavHost(navController = nav, startDestination = "tv_home") {
+                composable("tv_home") {
+                    TvHomeScreen(
+                        vm = feedVm,
+                        onOpenVideo = { id -> nav.navigate("player/$id") },
+                    )
+                }
+                composable("player/{id}") { entry ->
+                    val id = entry.arguments?.getString("id").orEmpty()
+                    PlayerScreen(
+                        videoId = id,
+                        vm = feedVm,
+                        onBack = { nav.popBackStack() },
+                        onOpenVideo = { next -> nav.navigate("player/$next") },
+                    )
+                }
+            }
+            return@KidsTubeTheme
+        }
 
         Scaffold(
             bottomBar = {
